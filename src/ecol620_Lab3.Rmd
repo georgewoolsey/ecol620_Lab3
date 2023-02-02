@@ -62,9 +62,11 @@ set.seed(11)
 Describe the biological use of Ripley’s K-function and L-function. Differentiate the differences between the two functions. (4 pts)
 
 <span style="color: teal;">
-Ripley's K-function and L-function are used to quantify the aggregation of points on a landscape within a circular radius from a given point. The resulting aggregation is then compared to a null model to determine if there is a significant difference between the observed pattern of points and the null model. The Complete Spatial Randomness (CSR) model is a commonly used null model. The CSR assumes that points are distributed over a study area in a completely random fashion where the probability of a point occurring at any given location is equal across the entire study area (i.e., the points come from a uniform distribution).
+Ripley's K-function and L-function are used to quantify the aggregation of points on a landscape within a circular radius from a given point. The resulting aggregation is then compared to a null model to determine if there is a significant difference between the observed pattern of points and a null model. The Complete Spatial Randomness (CSR) model is a commonly used null model. The CSR assumes that points are distributed over a study area in a completely random fashion where the probability of a point occurring at any given location is equal across the entire study area (i.e., the points come from a uniform distribution). If Ripley's K-value or the L-value are significantly different from the CSR model, then there is evidence that the points are not distributed randomly on a landscape.
+</span>
 
-Ripley's K-function quantifies the degree of spatial aggregation of points within a circular radius $r$ and then makes a comparison to what we would expect to see given a completely random process (i.e., CSR). As $r$ increases, Ripley's K value $K(r)$ will increase exponentially because the area of a circle grows exponentially. The L-function takes the square root of Ripley's K value to make the relationship between the resultant L-value $L(r)$ and the radius $r$ linear. Using the L-function the null hypothesis CSR follows a line with a slope of 1 and an intercept of 0; such that if $L(r) > r$, there is evidence for spatial aggregation, whereas if $L(r) < r$ there is evidence for regularity.
+<span style="color: teal;">
+Ripley's K-function quantifies the degree of spatial aggregation of points within a circular radius $r$ and then makes a comparison to what we would expect to see given a completely random process (i.e., CSR). As $r$ increases, the expected value of the K function under the CSR will increase exponentially because the area of a circle grows exponentially. The L-function takes the square root of Ripley's K value to make the relationship between the resultant L-value $L(r)$ and the radius $r$ linear. The expected value of the L-function under the CSR follows a line with a slope of 1 and an intercept of 0 such that $L(r) = r$.
 </span>
 
 # Question 2
@@ -72,11 +74,16 @@ Ripley's K-function quantifies the degree of spatial aggregation of points withi
 Describe the ecological meaning for the range of values produced by the L-function (i.e., L(r)-r) For instance, what does 0 mean, 1, or -1? (2 pts)
 
 <span style="color: teal;">
+Using the L-function, the null hypothesis CSR follows a line with a slope of 1 and an intercept of 0 such that $L(r) = r$. Subtracting $r$ from the result produces $L(r) - r = 0$. Under these conditions, a value of $0$ indicates that the spatial arrangement of the points is completely random across the landscape, consistent with the CSR. When $L(r)-r > 0$, there is evidence for spatial aggregation of points, whereas if $L(r)-r < 0$ there is evidence for uniform (regular) distribution of points.
 </span>
 
 # Question 3
 
 Why are edge effect correction factors necessary? (4 pts)
+
+<span style="color: teal;">
+Edge effects occur in point pattern analysis near plot boundaries and arise due to missing data outside of the study area (e.g., spatial extent of the study). Edge effects due to arbitrary study area boundaries influence measurements and statistics by not considering the true, full range of data. Correction of edge effects is accomplished by weighting points or using buffers, for example. Edge effect correction methods that utilize weights consider the circumference of circular buffer around a given point that falls outside the spatial extent of the data and then weights each point within the radius proportionally (e.g., if 25% of circumference is *inside* the plot, the weight for points inside is $\frac{1}{0.25}=4$).
+</span>
 
 # Cactus data
 
