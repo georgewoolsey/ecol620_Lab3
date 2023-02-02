@@ -1,0 +1,203 @@
+---
+title: "Lab 3"
+subtitle: "ECOL 620 - Applications in Landscape Ecology"
+author: "George Woolsey"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    # code_folding: hide
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding){ 
+    out_dir <- '../';
+    rmarkdown::render(inputFile, encoding = encoding, output_file=file.path(dirname(inputFile), out_dir, 'index.html'));
+    file.copy(from = "..//index.html", to = '..///data//lab3_george_woolsey.html', overwrite = TRUE)
+  })
+  
+---
+
+# Setup
+
+```{r, include=FALSE, warning=F, message=F}
+# knit options
+knitr::opts_chunk$set(
+  echo = TRUE
+  , warning = FALSE
+  , message = FALSE
+  # , results='hide'
+  , fig.width = 10
+  , fig.height = 7
+)
+```
+
+```{r, eval=T}
+# bread-and-butter
+library(tidyverse)
+library(lubridate)
+library(viridis)
+library(scales)
+library(latex2exp)
+# visualization
+library(ggrepel)
+library(cowplot)
+library(kableExtra)
+# spatial analysis
+library(USAboundaries)
+library(sf)
+library(terra)
+library(spatstat) #for point pattern analyses
+# set seed
+set.seed(11)
+```
+
+# Rules
+
+1. Using the provided R Markdown template, answer all questions and show your R code where necessary. Note, some questions are just plain text written answers.
+2. Complete your assignment using the R markdown file and submit individual assignments to Canvas. Knit your script and submit an .html file on Canvas. Please use  the following naming convention: lab3_firstname_lastname.html (ex. lab3_kyle_horton.html).  Note, we will not grade labs in any other format.
+
+# Question 1
+
+Describe the biological use of Ripley’s K-function and L-function. Differentiate the differences between the two functions. (4 pts)
+
+<span style="color: teal;">
+Ripley's K-function and L-function are used to quantify the aggregation of points on a landscape within a circular radius from a given point. The resulting aggregation is then compared to a null model to determine if there is a significant difference between the observed pattern of points and the null model. The Complete Spatial Randomness (CSR) model is a commonly used null model. The CSR assumes that points are distributed over a study area in a completely random fashion where the probability of a point occurring at any given location is equal across the entire study area (i.e., the points come from a uniform distribution).
+
+Ripley's K-function quantifies the degree of spatial aggregation of points within a circular radius $r$ and then makes a comparison to what we would expect to see given a completely random process (i.e., CSR). As $r$ increases, Ripley's K value $K(r)$ will increase exponentially because the area of a circle grows exponentially. The L-function takes the square root of Ripley's K value to make the relationship between the resultant L-value $L(r)$ and the radius $r$ linear. Using the L-function the null hypothesis CSR follows a line with a slope of 1 and an intercept of 0; such that if $L(r) > r$, there is evidence for spatial aggregation, whereas if $L(r) < r$ there is evidence for regularity.
+</span>
+
+# Question 2
+
+Describe the ecological meaning for the range of values produced by the L-function (i.e., L(r)-r) For instance, what does 0 mean, 1, or -1? (2 pts)
+
+<span style="color: teal;">
+</span>
+
+# Question 3
+
+Why are edge effect correction factors necessary? (4 pts)
+
+# Cactus data
+
+## Question 4
+
+Include a heat map (using ggplot) of the Ordway-Swisher Biological Station cactus data (e.g., Figure 4.4d). Use a smoothing parameter that best matches (Figure 4.4d). Visually, do the data appear randomly distributed? (4 pts)
+
+```{r}
+
+```
+
+## Question 5
+
+What conclusion do you draw from the quadrat.test on ppp.cactus with a 4 by 4 quadrat of ? What are the shortcomings of this approach? (4 pts)
+
+```{r}
+
+```
+
+## Question 6
+
+When implementing the isotropic edge effect correction for the L-function for Ordway-Swisher Biological Station cactus data (Line 119), where do you see the greatest observed difference from the uncorrected L-function occur? Include both plots (uncorrected and corrected). Plot with ggplot. (5 pts)
+
+```{r}
+#ggplot()+
+#  geom_line(data=Lnone, aes(x=r, y=theo-r), colour="red")+
+#  geom_line(data=Lnone, aes(x=r, y=un-r), colour="black")+
+#  labs(x="r", y="L(r)-r")+
+#  theme_classic()+
+#  theme(text = element_text(size=15))
+```
+
+
+## Question 7
+
+Using a point-wise envelope (𝛼 level of 0.05, isotropic correction), at what scales(s) do you reject the null hypothesis? In these regions, are the data clumped, randomly distributed, or uniform? No plot needed. (5 pts).
+
+```{r}
+
+```
+
+
+# Ponderosa Pine data
+
+## Question 8
+
+Examining the Ponderosa pine data included within the spatstat package, how would you characterize the distribution of trees? Does your interpretation change across scale(s)? Use the envelope function to justify your conclusion. Include the point-wise confidence envelope plot using an 𝛼 level of 0.01 and isotropic correction. Include the plot (produced in ggplot) of the tree locations and of the L-function with envelope (10 pts). (See example on Canvas)
+
+```{r}
+#ponderosa
+#plot(ponderosa)
+#summary(ponderosa)
+```
+
+
+# Simulated data
+
+## Question 9
+
+Examine the spatial dispersion of three simulated point distributions (Poisson, uniform, and clustered). Include the point-wise confidence envelope plots at 𝛼 level of 0.01 for the L-function with isotropic correction (using ggplot). In which distribution(s) do you see complete spatial randomness (CSR)? Include a 3 by 2 plot of the point locations and L-function with envelope (See example of Canvas) (10 pts).
+
+```{r}
+#set.seed(42)
+#poisson distribution
+#pois_dis <- rpoispp(100)
+
+#ggplot()+
+#  geom_point(data=as.data.frame(pois_dis), aes(x=x, y=y), colour="darkgreen")+
+#  labs(y = "northing (no units)", x = "easting (no units)")+
+#  theme_bw()+
+#  theme(text = element_text(size=15))+
+#  coord_equal()+
+#  ggtitle("Poisson Distribution")+
+#  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+#set.seed(1)
+#regular distribution
+#regu_dis <- rSSI(0.09, 70)
+
+#set.seed(21)
+#clustered distribution
+#clust_dist <- rMatClust(30, 0.05, 4)
+```
+
+
+<span style="color: teal;">
+asdfsadfasdf
+</span>
+
+
+```{r, include=FALSE, eval=FALSE}
+see p. 107 of [Fletcher and Fortin (2018)]
+
+complete spatial randomness (CSR, i.e. a homogenous Poisson process) is a commonly used null model.
+under CSR, it is assumed that..lambda is proportional to the area sampled.
+
+random var from poisson distribution with a mean and var of lambda is the number of points, then draw random number of points from a uniform distribution
+
+`spatstat.geom::owin` = Creates an object of class "owin" representing an observation window in the two-dimensional plane
+
+`spatstat.geom::ppp` = Creates an object of class "ppp" representing a point pattern dataset in the two-dimensional plane.
+
+Ripley's K = 
+r = radius surrounding points of interest (scale), as we go further and further from point are we getting something random or not. as r gets bigger the K(r) will start to get bigger exponentially because the area of a circle grows exponentially. r is the radius of a circle. are we deviating from the expectation of what lambda should be given the radius defined? point density of data is either higher or lower than we would expect (if black line falls outside of CI) given CSR.
+
+to go to L-function, take the square root of K(r)
+
+red line is what we would expect to see given a completely random process (CSR), if difference between the data (Kr or Lr) and redline, then reject the null hypothesis of CSR
+
+
+
+
+We start with describing the Ripley’s K function (Ripley 1976) because it is probably the most common second-order statistic for point patterns used in ecology. Ripley’s K calculates the degree of spatial aggregation of points within a circle of radius r and contrasts the observed pattern to that expected under CSR (Fig. 4.3a). Ripley’s K is defined as:
+
+$$
+K(r) = \frac{E}{\lambda}
+$$
+
+where $\lambda = \frac{n}{A}$, and $E =$ # points within radius $r$ of an arbitrarily chosen point (not including that point). Thus, if $K(r)$ is larger than expected for a radius $r$, the observed number of events shows evidence of clustering, whereas if $K(r)$ is smaller than expected for a radius $r$ there is evidence for regularity. Given that the area of a circle is $\pi \cdot r^2$ , the expected number of points in a circle of radius $r$ under CSR is:
+```
+
