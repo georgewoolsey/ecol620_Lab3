@@ -141,22 +141,73 @@ ggplot(data = .) +
   )
 ```
 
-
-Eastern prickly pear (*Opuntia humifusa*) at the Ordway-Swisher Biological Station
+<span style="color: teal;">
+Based on the plot above of density of the eastern prickly pear (*Opuntia humifusa*) at the Ordway-Swisher Biological Station, it does not appear that this species is randomly distributed across the landscape. Visual inspection of the density plot seems to indicate that the intensity of points across the plot is distributed unevenly with some areas have higher density of points than other areas. This pattern seems to violate the assumption of a homogeneous point process.
+</span>
 
 ## Question 5
 
 What conclusion do you draw from the quadrat.test on ppp.cactus with a 4 by 4 quadrat of ? What are the shortcomings of this approach? (4 pts)
 
 ```{r}
-
+#chi-sq test for complete spatial randomness, CSR
+quadrat_test <- spatstat.core::quadrat.test(ppp.cactus
+  , nx = 4, ny = 4, method = "Chisq", alternative = "two.sided"
+)
+quadrat_test
 ```
+
+<span style="color: teal;">
+The `spatstat.core::quadrat.test` function performs a test of Complete Spatial Randomness (CSR) for a given point pattern, based on quadrat counts. The resulting $\chi^2$ test statistic is **`r round(quadrat_test$statistic, 2)`** with a p-value of **`r round(quadrat_test$p.value, 4)`**. This test indicates that the point pattern observed in the eastern prickly pear data is significantly different from the null hypothesis of complete spatial randomness at the $\alpha = 0.05$ level. That is, the eastern prickly pear observation points are distributed non-randomly across the site. This approach does not consider edge effects and is a first-order metric that is based on point patterns across the entire study area.
+</span>
 
 ## Question 6
 
 When implementing the isotropic edge effect correction for the L-function for Ordway-Swisher Biological Station cactus data (Line 119), where do you see the greatest observed difference from the uncorrected L-function occur? Include both plots (uncorrected and corrected). Plot with ggplot. (5 pts)
 
 ```{r}
+Knone <- Kest(ppp.cactus, correction="none")
+spatstat.core::Kest(ppp.cactus, correction="none") %>% 
+  as.data.frame() %>% 
+ggplot(data = ., mapping = aes(x = r)) + 
+  geom_line(mapping = aes(y = un, color = "un")) + 
+  geom_line(mapping = aes(y = theo, color = "theo"), linetype = "dashed") +
+  scale_color_manual(
+    values = c("red", "black")
+    , labels = c(
+      latex2exp::TeX("$\\K_{pois}(r)$")
+      , latex2exp::TeX("$\\hat{K}_{un}(r)$")
+    )
+  ) +
+  labs(
+    x = latex2exp::TeX("$r$")
+    , y = latex2exp::TeX("$K(r)$")
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = c(0.1, 0.9)
+    , legend.text = element_text(size = 7)
+    , legend.title = element_blank()
+    # , axis.title = element_text(size = 7)
+    # , axis.text.y = element_text(size = 7)
+    # , axis.text.x = element_text(size = 7, angle = 35, hjust = 0.7)
+    # , panel.border = element_blank()
+  )
+
+#plot K
+plot(Kest(ppp.cactus, correction="none"), legend=T)
+#plot L with 1:1 expectation
+Lnone <- Lest(ppp.cactus, correction="none")
+plot(Lest(ppp.cactus, correction="none"), legend=T)
+#L and K are related by sqrt(Knone$theo/pi)
+plot(sqrt(Knone$theo/pi), Lnone$theo) #this is a perfect 1 to 1 line
+plot(sqrt(Knone$theo/pi), Lnone$r) #this is a perfect 1 to 1 line
+#plot L with 0 expectation
+plot(Lnone, . - r~r, legend=T)
+#isotropic edge correction
+Liso <- Lest(ppp.cactus, correction="isotropic")
+plot(Liso, . - r~r, legend=T)
+
 #ggplot()+
 #  geom_line(data=Lnone, aes(x=r, y=theo-r), colour="red")+
 #  geom_line(data=Lnone, aes(x=r, y=un-r), colour="black")+
@@ -164,6 +215,10 @@ When implementing the isotropic edge effect correction for the L-function for Or
 #  theme_classic()+
 #  theme(text = element_text(size=15))
 ```
+
+<span style="color: teal;">
+The `spatstat.core::quadrat.test` function performs a test of Complete Spatial Randomness (CSR) for a given point pattern, based on quadrat counts. The resulting $\chi^2$ test statistic is **`r round(quadrat_test$statistic, 2)`** with a p-value of **`r round(quadrat_test$p.value, 4)`**. This test indicates that the point pattern observed in the eastern prickly pear data is significantly different from the null hypothesis of complete spatial randomness at the $\alpha = 0.05$ level. That is, the eastern prickly pear observation points are distributed non-randomly across the site. This approach does not consider edge effects and is a first-order metric that is based on point patterns across the entire study area.
+</span>
 
 
 ## Question 7
