@@ -92,8 +92,57 @@ Edge effects occur in point pattern analysis near plot boundaries and arise due 
 Include a heat map (using ggplot) of the Ordway-Swisher Biological Station cactus data (e.g., Figure 4.4d). Use a smoothing parameter that best matches (Figure 4.4d). Visually, do the data appear randomly distributed? (4 pts)
 
 ```{r}
+# load data
+cactus <- read.csv("../data/cactus.csv")
+boundary <- read.csv("../data/cactus_boundaries.csv",header=T)
+#create spatstat objects
+ppp.window <- spatstat.geom::owin(
+  xrange = c(boundary$Xmin, boundary$Xmax)
+  , yrange = c(boundary$Ymin, boundary$Ymax)
+)
+ppp.cactus <- spatstat.geom::ppp(x = cactus$East, y = cactus$North, window = ppp.window)
 
+#summary information
+# summary(ppp.cactus) %>% glimpse()
+
+# the average intensity that summary yields is lambda
+lambda <- summary(ppp.cactus)$intensity
+
+# calculate cactus density/intensity and convert to df
+cactus_density_df <- ppp.cactus %>% 
+  stats::density(bw = 10) %>% # bw = the smoothing bandwidth (smoothing kernel)
+  as.data.frame()
+
+# plot heat map
+ppp.cactus %>% 
+  stats::density(2) %>% 
+  as.data.frame() %>%
+ggplot(data = .) +
+  geom_tile(mapping = aes(x = x, y = y, fill = value)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_viridis_c(option = "plasma") +
+  coord_fixed(ratio = 1) +
+  labs(
+    x = "Easting (m)"
+    , y = "Northing (m)"
+    , fill = "Opuntia humifusa \n density (m\u00b2)"
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom"
+    , legend.direction = "horizontal"
+    , legend.text = element_text(size = 7, angle = 30, hjust = 0.7)
+    , legend.title = element_text(size = 7)
+    , axis.title = element_text(size = 7)
+    , axis.text.y = element_text(size = 7)
+    , axis.text.x = element_text(size = 7, angle = 35, hjust = 0.7)
+    , panel.border = element_blank()
+  )
 ```
+
+
+Eastern prickly pear (*Opuntia humifusa*) at the Ordway-Swisher Biological Station
 
 ## Question 5
 
