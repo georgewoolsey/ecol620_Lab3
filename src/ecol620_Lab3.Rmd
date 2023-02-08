@@ -328,57 +328,187 @@ max_sig <- lest_env_iso %>% dplyr::filter(is_lhat_sig_diff==1) %>% dplyr::pull(r
 The figure above displays a point-wise envelope based on the L-function with a significance level of $\alpha = 0.05$ and an isotropic correction for edge effects. The null hypothesis of complete spatial randomness (CSR) can be rejected when the observed line falls outside the envelope for a given point aggregation radius ($r$). Based on this data, we reject the null hypothesis of a CSR point pattern in the spatial distribution of cactus at the site when the aggregation radius is between ~**`r min_sig`**m and **`r max_sig`**m. At this scale, the data indicates a non-random, aggregated point pattern.
 </span>
 
-
-
+```{r, warning=FALSE, message=FALSE, echo=FALSE, include=FALSE}
+remove(list = ls())
+gc()
+```
 
 # Ponderosa Pine data
 
 ## Question 8
 
-Examining the Ponderosa pine data included within the spatstat package, how would you characterize the distribution of trees? Does your interpretation change across scale(s)? Use the envelope function to justify your conclusion. Include the point-wise confidence envelope plot using an 𝛼 level of 0.01 and isotropic correction. Include the plot (produced in ggplot) of the tree locations and of the L-function with envelope (10 pts). (See example on Canvas)
+Examining the Ponderosa pine data included within the spatstat package, how would you characterize the distribution of trees? Does your interpretation change across scale(s)? Use the envelope function to justify your conclusion. Include the point-wise confidence envelope plot using an $\alpha$ level of 0.01 and isotropic correction. Include the plot (produced in ggplot) of the tree locations and of the L-function with envelope (10 pts). (See example on Canvas)
 
-```{r}
-#ponderosa
-#plot(ponderosa)
-#summary(ponderosa)
+```{r, results='hide', , fig.width = 10, fig.height = 5.5}
+set.seed(33)
+# load data
+# The dataset ponderosa is a spatial point pattern (object of class "ppp") 
+  # representing the point pattern of tree positions. 
+  # Spatial coordinates are given in metres.
+spatstat.data::ponderosa %>% str()
+# point pattern plot
+plt_pts <- spatstat.data::ponderosa %>% 
+    as.data.frame() %>%
+  ggplot(data = .) +
+    geom_point(mapping = aes(x = x, y = y), color = "navy", size = 2) +
+    coord_fixed(ratio = 1) +
+    labs(
+      x = "Easting (m)"
+      , y = "Northing (m)"
+    ) +
+    theme_bw() +
+    theme(
+      axis.title = element_text(size = 10)
+      , axis.text = element_text(size = 8)
+      , axis.text.x = element_text(angle = 35, hjust = 0.7)
+    )
+# L-function plot with envelope
+#Monte Carlo simulations to calculate a global and pointwise confidence envelope under CSR
+plt_lfn <- spatstat.core::envelope(spatstat.data::ponderosa
+    , fun = Lest # pcf # = estimating the distance at which spatial patterns arise
+    , nsim = 199
+    , rank = 1
+    , correction = "isotropic"
+    , global = FALSE
+  ) %>% 
+  as.data.frame() %>% 
+  dplyr::rename(lhat = obs) %>%
+  # plot
+  ggplot(data = ., mapping = aes(x = r)) + 
+    geom_ribbon(mapping = aes(ymin = lo-r, ymax = hi-r), fill = "gray85") + 
+    geom_line(mapping = aes(y = theo-r, color = "2"), size = 1, linetype = "dashed") +
+    geom_line(mapping = aes(y = lhat-r, color = "1"), size = 1) + 
+    scale_color_manual(
+      values = c("black", "red")
+      , labels = c(
+        latex2exp::TeX("$\\hat{L}_{data}(r)$")
+        , latex2exp::TeX("$\\L_{CSR}(r)$")
+      )
+    ) +
+    scale_x_continuous(breaks = scales::breaks_extended(n = 8)) +
+    scale_y_continuous(breaks = scales::breaks_extended(n = 8)) +
+    labs(
+      x = latex2exp::TeX("$r$")
+      , y = latex2exp::TeX("$L(r)-r$")
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "bottom"
+      , legend.text = element_text(size = 11, hjust = 0)
+      , legend.title = element_blank()
+      , legend.direction = "horizontal"
+      , legend.margin = margin(-8,0,0,0)
+      , axis.title = element_text(size = 10)
+      , axis.text = element_text(size = 8)
+      , panel.grid = element_blank()
+    ) +
+    guides(color = guide_legend(override.aes = list(size = 1)))
+# combine plots
+cowplot::plot_grid(
+  plotlist =  list(plt_pts, plt_lfn)
+  , nrow = 1
+  , align = "hv"
+)
+
 ```
 
+<span style="color: teal;">
+Visual inspection of the point locations of the ponderosa pine (*Pinus ponderosa*) trees indicates a somewhat uniform (regular) distribution of trees. Over the entire extent of the study area, the distribution of trees does not appear to follow an aggregated spatial pattern. The point-wise envelope based on the L-function with a significance level of $\alpha = 0.01$ and an isotropic correction for edge effects supports this conclusion. The null hypothesis of complete spatial randomness (CSR) cannot be rejected across all spatial scales (with minor exceptions) as the observed line does not fall outside the envelope for a given point aggregation radius ($r$). Based on this data, we fail to reject the null hypothesis of a CSR point pattern in the spatial distribution of ponderosa pine at the site.
+</span>
 
 # Simulated data
 
 ## Question 9
 
-Examine the spatial dispersion of three simulated point distributions (Poisson, uniform, and clustered). Include the point-wise confidence envelope plots at 𝛼 level of 0.01 for the L-function with isotropic correction (using ggplot). In which distribution(s) do you see complete spatial randomness (CSR)? Include a 3 by 2 plot of the point locations and L-function with envelope (See example of Canvas) (10 pts).
+Examine the spatial dispersion of three simulated point distributions (Poisson, uniform, and clustered). Include the point-wise confidence envelope plots at $\alpha$ level of 0.01 for the L-function with isotropic correction (using ggplot). In which distribution(s) do you see complete spatial randomness (CSR)? Include a 3 by 2 plot of the point locations and L-function with envelope (See example of Canvas) (10 pts).
 
-```{r}
-#set.seed(42)
+```{r, results='hide', fig.width = 11, fig.height = 8}
+set.seed(42)
+# generate data
 #poisson distribution
-#pois_dis <- rpoispp(100)
-
-#ggplot()+
-#  geom_point(data=as.data.frame(pois_dis), aes(x=x, y=y), colour="darkgreen")+
-#  labs(y = "northing (no units)", x = "easting (no units)")+
-#  theme_bw()+
-#  theme(text = element_text(size=15))+
-#  coord_equal()+
-#  ggtitle("Poisson Distribution")+
-#  theme(plot.title = element_text(hjust = 0.5))
-```
-
-
-```{r}
-#set.seed(1)
-#regular distribution
-#regu_dis <- rSSI(0.09, 70)
-
-#set.seed(21)
+dist_pois <- spatstat.random::rpoispp(lambda = 100)
+#uniform/regular distribution
+dist_unif <- rSSI(r = 0.09, n = 70)
 #clustered distribution
-#clust_dist <- rMatClust(30, 0.05, 4)
-```
+dist_clust <- spatstat.random::rMatClust(kappa = 30, scale = 0.05, mu = 4)
+# define function for point plot
+plot_pnt_fn <- function(my_data, my_title){
+  return(
+  ggplot(data = my_data %>% as.data.frame()) +
+    geom_point(mapping = aes(x = x, y = y), color = "navy", size = 2) +
+    coord_fixed(ratio = 1) +
+    labs(
+      x = "Easting (unitless)"
+      , y = "Northing (unitless)"
+      , title = my_title
+    ) +
+    theme_bw() +
+    theme(
+      axis.title = element_text(size = 9)
+      , axis.text = element_text(size = 8)
+    )
+  )
+}
+# define function for L-function with envelope plot
+plot_lfnenv_fn <- function(my_data){
+  return(
+  spatstat.core::envelope(my_data
+    , fun = Lest # pcf # = estimating the distance at which spatial patterns arise
+    , nsim = 199
+    , rank = 1
+    , correction = "isotropic"
+    , global = FALSE
+  ) %>% 
+  as.data.frame() %>% 
+  dplyr::rename(lhat = obs) %>%
+  # plot
+  ggplot(data = ., mapping = aes(x = r)) + 
+    geom_ribbon(mapping = aes(ymin = lo-r, ymax = hi-r), fill = "gray85") + 
+    geom_line(mapping = aes(y = theo-r, color = "2"), size = 1, linetype = "dashed") +
+    geom_line(mapping = aes(y = lhat-r, color = "1"), size = 1) + 
+    scale_color_manual(
+      values = c("black", "red")
+      , labels = c(
+        latex2exp::TeX("$\\hat{L}_{data}(r)$")
+        , latex2exp::TeX("$\\L_{CSR}(r)$")
+      )
+    ) +
+    scale_x_continuous(breaks = scales::breaks_extended(n = 8)) +
+    scale_y_continuous(breaks = scales::breaks_extended(n = 8)) +
+    labs(
+      x = latex2exp::TeX("$r$")
+      , y = latex2exp::TeX("$L(r)-r$")
+    ) +
+    theme_bw() +
+    theme(
+      # legend.position = c(0.65, 0.08)
+      legend.position = "bottom"
+      , legend.text = element_text(size = 8, hjust = 0)
+      , legend.title = element_blank()
+      , legend.direction = "horizontal"
+      , legend.margin = margin(-8,0,0,0)
+      , axis.title = element_text(size = 9)
+      , axis.text = element_text(size = 8)
+      , panel.grid = element_blank()
+    )
+  )
+}
 
+cowplot::plot_grid(
+  plot_pnt_fn(my_data = dist_pois, my_title = "Poisson Distribution")
+  , plot_pnt_fn(my_data = dist_unif, my_title = "Uniform Distribution")
+  , plot_pnt_fn(my_data = dist_clust, my_title = "Clustered Distribution")
+  , plot_lfnenv_fn(my_data = dist_pois)
+  , plot_lfnenv_fn(my_data = dist_unif)
+  , plot_lfnenv_fn(my_data = dist_clust)
+  , nrow = 2
+  , align = "hv"
+)
+
+```
 
 <span style="color: teal;">
-asdfsadfasdf
+In which distribution(s) do you see complete spatial randomness (CSR)? Include a 3 by 2 plot of the point locations and L-function with envelope (See example of Canvas) (10 pts).
 </span>
 
 
