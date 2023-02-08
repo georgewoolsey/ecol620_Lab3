@@ -1512,7 +1512,7 @@ div.tocify {
 <h1 class="title toc-ignore">Lab 3</h1>
 <h3 class="subtitle">ECOL 620 - Applications in Landscape Ecology</h3>
 <h4 class="author">George Woolsey</h4>
-<h4 class="date">07 February, 2023</h4>
+<h4 class="date">08 February, 2023</h4>
 
 </div>
 
@@ -1772,6 +1772,20 @@ edge effect correction reduces this bias as radius <span class="math inline">\(r
 correction), at what scales(s) do you reject the null hypothesis? In
 these regions, are the data clumped, randomly distributed, or uniform?
 No plot needed. (5 pts).</p>
+<ul>
+<li>The Fletcher text suggests that to get a 5% significance, we need
+<code>nsim</code> = 19. For a 1% significance, <code>nsim</code> =
+99.</li>
+<li>The R documentation for the <code>envelope</code> function, on the
+other hand, indicates that there is a relationship between
+<code>alpha</code>, <code>nrank</code>, and <code>nsim</code>, where:
+<code>alpha</code> = 2*<code>nrank</code>/(1 + <code>nsim</code>). If we
+replace <code>alpha</code> = 0.05 and <code>nrank</code> = 1 in this
+equation, we get <code>nsim</code> = 39. For <code>alpha</code> = 0.01
+and <code>nrank</code> = 1, we get <code>nsim</code> = 199. We will
+assume that the Fletcher text has a typo and stick to what’s in the
+function documentation.</li>
+</ul>
 </div>
 </div>
 <div id="ponderosa-pine-data" class="section level1">

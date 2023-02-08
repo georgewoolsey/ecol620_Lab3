@@ -133,10 +133,10 @@ ggplot(data = .) +
     legend.position = "bottom"
     , legend.direction = "horizontal"
     , legend.text = element_text(size = 7, angle = 30, hjust = 0.7)
-    , legend.title = element_text(size = 7)
+    , legend.title = element_text(size = 8)
     , axis.title = element_text(size = 7)
-    , axis.text.y = element_text(size = 7)
-    , axis.text.x = element_text(size = 7, angle = 35, hjust = 0.7)
+    , axis.text = element_text(size = 7)
+    , axis.text.x = element_text(angle = 35, hjust = 0.7)
     , panel.border = element_blank()
   )
 ```
@@ -221,8 +221,8 @@ rbind(
     scale_color_manual(
       values = c("black", "red")
       , labels = c(
-        latex2exp::TeX("$\\hat{L}(r)$")
-        , latex2exp::TeX("$\\L_{pois}(r)$")
+        latex2exp::TeX("$\\hat{L}_{data}(r)$")
+        , latex2exp::TeX("$\\L_{CSR}(r)$")
       )
     ) +
     scale_x_continuous(breaks = scales::breaks_extended(n = 8)) +
@@ -239,24 +239,77 @@ rbind(
       , legend.direction = "horizontal"
       , legend.margin = margin(0,0,-8,0)
       , axis.title = element_text(size = 10)
-      , axis.text = element_text(size = 7)
+      , axis.text = element_text(size = 8)
       , panel.grid = element_blank()
     ) +
     guides(color = guide_legend(override.aes = list(size = 1)))
 ```
 
 <span style="color: teal;">
-The greatest observed difference in the $\hat{L}(r)$ values between the uncorrected estimates and the estimates based on the isotropic correction for edge effects occur at higher values of $r$. As the radius $r$ of aggregation of points increases, the uncorrected $\hat{L}(r)$ values approach the values expected under complete spatial randomness but the edge effect correction reduces this bias as radius $r$ increases.
+The greatest observed difference in the $\hat{L}_{data}(r)$ values between the uncorrected estimates and the estimates based on the isotropic correction for edge effects occur at higher values of $r$. As the radius $r$ of aggregation of points increases, the uncorrected $\hat{L}_{data}(r)$ values approach the values expected under complete spatial randomness but the edge effect correction reduces this bias as radius $r$ increases.
 </span>
-
 
 ## Question 7
 
 Using a point-wise envelope ($\alpha$ level of 0.05, isotropic correction), at what scales(s) do you reject the null hypothesis? In these regions, are the data clumped, randomly distributed, or uniform? No plot needed. (5 pts).
 
+* The Fletcher text suggests that to get a 5% significance, we need `nsim` = 19. For a 1% significance, `nsim` = 99. 
+
+* The R documentation for the `spatstat.core::envelope` function, on the other hand, indicates that there is a relationship between `alpha`, `nrank`, and `nsim`, where: `alpha` = 2*`nrank`/(1 + `nsim`). If we replace `alpha` = 0.05 and `nrank` = 1 in this equation, we get `nsim` = 39. For `alpha` = 0.01 and `nrank` = 1, we get `nsim` = 199. 
+
+We will assume that the Fletcher text has a typo and stick to what's in the function documentation.
+
 ```{r}
+#Monte Carlo simulations to calculate a global and pointwise confidence envelope under CSR
+#nsim relates to the alpha level. See page 118 of Fletcher. e.g., rank of 1 and nsim of 199 equates to an alpha of 0.01
+spatstat.core::envelope(ppp.cactus
+  , fun = Lest # pcf # = estimating the distance at which spatial patterns arise
+  , nsim = 39
+  , rank = 1
+  , correction = "isotropic"
+  , global = FALSE
+) %>% 
+  as.data.frame() %>% 
+  dplyr::rename(lhat = obs) %>% 
+  ggplot(data = ., mapping = aes(x = r)) + 
+    geom_ribbon(mapping = aes(ymin = lo-r, ymax = hi-r), fill = "gray85") + 
+    geom_line(mapping = aes(y = theo-r, color = "2"), size = 1.1, linetype = "dashed") +
+    geom_line(mapping = aes(y = lhat-r, color = "1"), size = 1.1) + 
+    scale_color_manual(
+      values = c("black", "red")
+      , labels = c(
+        latex2exp::TeX("$\\hat{L}_{data}(r)$")
+        , latex2exp::TeX("$\\L_{CSR}(r)$")
+      )
+    ) +
+    scale_x_continuous(breaks = scales::breaks_extended(n = 8)) +
+    scale_y_continuous(breaks = scales::breaks_extended(n = 8)) +
+    labs(
+      x = latex2exp::TeX("$r$")
+      , y = latex2exp::TeX("$L(r)-r$")
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "top" # c(0.1, 0.9)
+      , legend.text = element_text(size = 10, hjust = 0)
+      , legend.title = element_blank()
+      , legend.direction = "horizontal"
+      , legend.margin = margin(0,0,-8,0)
+      , axis.title = element_text(size = 10)
+      , axis.text = element_text(size = 8)
+      , panel.grid = element_blank()
+    ) +
+    guides(color = guide_legend(override.aes = list(size = 1)))
 
 ```
+
+<span style="color: teal;">
+The analyses so far are exploratory. While the observed statistics (K, L) appear different than the expectation, it is unclear if these are substantially (or significantly) different. To conduct formal inference regarding if the point pattern follows CSR, we can use Monte Carlo simulations to calculate a confidence envelope under CSR with the envelope function. This function can be applied to several point pattern statistics.
+
+In the envelope function, rank specifies the alpha for the simulations. For a rank=1, the max and min are used for envelopes, such that for 99 simulations, α = 0.01 while for 19 simulations, α = 0.05. Also note that we used global = FALSE. This means that these are “pointwise envelopes.” These envelopes work better for L than K because of variance stabilizing properties. Plots of pointwise envelopes show the stated upper and lower quantiles of simulated patterns for any distance r (Fig. 4.7). Because such analyses are calculating envelopes for many distances, pointwise envelopes with a specified α should not be used to reject a null model at that level (because of the multiple tests). Consequently, there are alternative global tests that can be used in this way. While global tests are under active development (Baddeley et al. 2014; Wiegand et al. 2016), spatstat does provide one option for a global test (using global = T in the above model). This approach estimates the maximum deviation from the Poisson point process across all r (i.e., D = max|K(r)  Kpois(r)|). This approach is referred to as a simultaneous envelope (or critical band) rather than a pointwise envelope (Fig. 4.7a). If the observed line falls outside the simultaneous envelope at any point on r, we would reject the null hypothesis.
+</span>
+
+
 
 
 # Ponderosa Pine data
