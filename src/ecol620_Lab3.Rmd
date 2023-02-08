@@ -508,7 +508,7 @@ cowplot::plot_grid(
 ```
 
 <span style="color: teal;">
-In which distribution(s) do you see complete spatial randomness (CSR)? Include a 3 by 2 plot of the point locations and L-function with envelope (See example of Canvas) (10 pts).
+Using the L-function, subtracting $r$ from the result produces $L(r) - r = 0$ for the null hypothesis of complete spatial randomness (CSR). Based on the figure above, the sample points drawn from the Poisson distribution are most in-line with the CSR hypothesis of complete random point distribution across the landscape. There is evidence for uniform (regular) distribution of points for the sample points drawn from the uniform distribution as $L(r)-r < 0$ for $r$ values between 0 and ~0.125 (unitless); while points from the uniform distribution at larger scales are distributed more consistently with the CSR hypothesis. The clustered distribution is significantly different from the null hypothesis of CSR since over the range of $r$ scales $L(r)-r > 0$, suggesting that there is evidence for spatial aggregation of points.
 </span>
 
 
