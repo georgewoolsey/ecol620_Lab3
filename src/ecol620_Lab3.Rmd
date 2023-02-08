@@ -234,7 +234,7 @@ rbind(
     theme_bw() +
     theme(
       legend.position = "top" # c(0.1, 0.9)
-      , legend.text = element_text(size = 10, hjust = 0)
+      , legend.text = element_text(size = 12, hjust = 0)
       , legend.title = element_blank()
       , legend.direction = "horizontal"
       , legend.margin = margin(0,0,-8,0)
@@ -246,7 +246,7 @@ rbind(
 ```
 
 <span style="color: teal;">
-The greatest observed difference in the $\hat{L}_{data}(r)$ values between the uncorrected estimates and the estimates based on the isotropic correction for edge effects occur at higher values of $r$. As the radius $r$ of aggregation of points increases, the uncorrected $\hat{L}_{data}(r)$ values approach the values expected under complete spatial randomness but the edge effect correction reduces this bias as radius $r$ increases.
+The greatest observed difference in the $\hat{L}_{data}(r)$ values between the uncorrected estimates and the estimates based on the isotropic correction for edge effects occur at higher values of $r$. As the radius ($r$) of the aggregation of points increases, the uncorrected $\hat{L}_{data}(r)$ values approach the values expected under complete spatial randomness but the edge effect correction reduces this bias as radius increases.
 </span>
 
 ## Question 7
@@ -259,22 +259,42 @@ Using a point-wise envelope ($\alpha$ level of 0.05, isotropic correction), at w
 
 We will assume that the Fletcher text has a typo and stick to what's in the function documentation.
 
-```{r}
+```{r, results='hide'}
+set.seed(33)
 #Monte Carlo simulations to calculate a global and pointwise confidence envelope under CSR
-#nsim relates to the alpha level. See page 118 of Fletcher. e.g., rank of 1 and nsim of 199 equates to an alpha of 0.01
-spatstat.core::envelope(ppp.cactus
-  , fun = Lest # pcf # = estimating the distance at which spatial patterns arise
-  , nsim = 39
-  , rank = 1
-  , correction = "isotropic"
-  , global = FALSE
-) %>% 
+lest_env_iso <- spatstat.core::envelope(ppp.cactus
+    , fun = Lest # pcf # = estimating the distance at which spatial patterns arise
+    , nsim = 39
+    , rank = 1
+    , correction = "isotropic"
+    , global = FALSE
+  ) %>% 
   as.data.frame() %>% 
   dplyr::rename(lhat = obs) %>% 
-  ggplot(data = ., mapping = aes(x = r)) + 
+  dplyr::arrange(desc(r)) %>% 
+  dplyr::mutate(
+    lhat_sig_diff = ifelse(lhat < lo | lhat > hi, lhat, as.numeric(NA))
+    , is_lhat_sig_diff = ifelse(lhat < lo | lhat > hi, 1, 0)
+    , cum = cumsum(is_lhat_sig_diff) * is_lhat_sig_diff
+    , is_lhat_sig_diff_span = dplyr::case_when(
+        is_lhat_sig_diff == 1
+          & dplyr::lag(is_lhat_sig_diff, n = 1) == 1
+          & dplyr::lead(is_lhat_sig_diff, n = 1) == 1
+          & cumsum(is_lhat_sig_diff) * is_lhat_sig_diff > 5
+          ~ 1
+        , TRUE ~ 0
+    )
+  ) %>% 
+  dplyr::arrange(r)
+# find range of r values for significant difference from CSR
+min_sig <- lest_env_iso %>% dplyr::filter(is_lhat_sig_diff_span==1) %>% dplyr::pull(r) %>% min() %>% round(2)
+max_sig <- lest_env_iso %>% dplyr::filter(is_lhat_sig_diff==1) %>% dplyr::pull(r) %>% max() %>% round(2)
+# plot
+  ggplot(data = lest_env_iso, mapping = aes(x = r)) + 
     geom_ribbon(mapping = aes(ymin = lo-r, ymax = hi-r), fill = "gray85") + 
-    geom_line(mapping = aes(y = theo-r, color = "2"), size = 1.1, linetype = "dashed") +
-    geom_line(mapping = aes(y = lhat-r, color = "1"), size = 1.1) + 
+    geom_line(mapping = aes(y = theo-r, color = "2"), size = 1, linetype = "dashed") +
+    geom_line(mapping = aes(y = lhat_sig_diff-r), size = 1.9, color = "steelblue", show.legend = FALSE) +
+    geom_line(mapping = aes(y = lhat-r, color = "1"), size = 1) + 
     scale_color_manual(
       values = c("black", "red")
       , labels = c(
@@ -287,26 +307,25 @@ spatstat.core::envelope(ppp.cactus
     labs(
       x = latex2exp::TeX("$r$")
       , y = latex2exp::TeX("$L(r)-r$")
+      , caption = latex2exp::TeX("*blue area of $\\hat{L}_{data}(r)$ indicates significant difference at $\\alpha = 0.05$")
     ) +
     theme_bw() +
     theme(
       legend.position = "top" # c(0.1, 0.9)
-      , legend.text = element_text(size = 10, hjust = 0)
+      , legend.text = element_text(size = 12, hjust = 0)
       , legend.title = element_blank()
       , legend.direction = "horizontal"
       , legend.margin = margin(0,0,-8,0)
       , axis.title = element_text(size = 10)
       , axis.text = element_text(size = 8)
       , panel.grid = element_blank()
+      , plot.caption = element_text(size = 8)
     ) +
     guides(color = guide_legend(override.aes = list(size = 1)))
-
 ```
 
 <span style="color: teal;">
-The analyses so far are exploratory. While the observed statistics (K, L) appear different than the expectation, it is unclear if these are substantially (or significantly) different. To conduct formal inference regarding if the point pattern follows CSR, we can use Monte Carlo simulations to calculate a confidence envelope under CSR with the envelope function. This function can be applied to several point pattern statistics.
-
-In the envelope function, rank specifies the alpha for the simulations. For a rank=1, the max and min are used for envelopes, such that for 99 simulations, α = 0.01 while for 19 simulations, α = 0.05. Also note that we used global = FALSE. This means that these are “pointwise envelopes.” These envelopes work better for L than K because of variance stabilizing properties. Plots of pointwise envelopes show the stated upper and lower quantiles of simulated patterns for any distance r (Fig. 4.7). Because such analyses are calculating envelopes for many distances, pointwise envelopes with a specified α should not be used to reject a null model at that level (because of the multiple tests). Consequently, there are alternative global tests that can be used in this way. While global tests are under active development (Baddeley et al. 2014; Wiegand et al. 2016), spatstat does provide one option for a global test (using global = T in the above model). This approach estimates the maximum deviation from the Poisson point process across all r (i.e., D = max|K(r)  Kpois(r)|). This approach is referred to as a simultaneous envelope (or critical band) rather than a pointwise envelope (Fig. 4.7a). If the observed line falls outside the simultaneous envelope at any point on r, we would reject the null hypothesis.
+The figure above displays a point-wise envelope based on the L-function with a significance level of $\alpha = 0.05$ and an isotropic correction for edge effects. The null hypothesis of complete spatial randomness (CSR) can be rejected when the observed line falls outside the envelope for a given point aggregation radius ($r$). Based on this data, we reject the null hypothesis of a CSR point pattern in the spatial distribution of cactus at the site when the aggregation radius is between ~**`r min_sig`**m and **`r max_sig`**m. At this scale, the data indicates a non-random, aggregated point pattern.
 </span>
 
 
