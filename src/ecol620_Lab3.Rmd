@@ -165,65 +165,94 @@ The `spatstat.core::quadrat.test` function performs a test of Complete Spatial R
 
 When implementing the isotropic edge effect correction for the L-function for Ordway-Swisher Biological Station cactus data (Line 119), where do you see the greatest observed difference from the uncorrected L-function occur? Include both plots (uncorrected and corrected). Plot with ggplot. (5 pts)
 
-```{r}
-Knone <- Kest(ppp.cactus, correction="none")
-spatstat.core::Kest(ppp.cactus, correction="none") %>% 
+```{r, include=FALSE, eval=FALSE}
+# K-function with no correction for edge effects
+plt_k_nocorr <- spatstat.core::Kest(ppp.cactus, correction="none") %>% 
   as.data.frame() %>% 
-ggplot(data = ., mapping = aes(x = r)) + 
-  geom_line(mapping = aes(y = un, color = "un")) + 
-  geom_line(mapping = aes(y = theo, color = "theo"), linetype = "dashed") +
-  scale_color_manual(
-    values = c("red", "black")
-    , labels = c(
-      latex2exp::TeX("$\\K_{pois}(r)$")
-      , latex2exp::TeX("$\\hat{K}_{un}(r)$")
+  ggplot(data = ., mapping = aes(x = r)) + 
+    geom_line(mapping = aes(y = un, color = "1")) + 
+    geom_line(mapping = aes(y = theo, color = "2"), linetype = "dashed") +
+    scale_color_manual(
+      values = c("black", "red")
+      , labels = c(
+        latex2exp::TeX("$\\hat{K}_{uncorr}(r)$")
+        , latex2exp::TeX("$\\K_{pois}(r)$")
+      )
+    ) +
+    scale_x_continuous(breaks = scales::breaks_extended(n = 8)) +
+    scale_y_continuous(breaks = scales::breaks_extended(n = 8)) +
+    labs(
+      x = latex2exp::TeX("$r$")
+      , y = latex2exp::TeX("$K(r)$")
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = c(0.1, 0.9)
+      , legend.text = element_text(size = 8, hjust = 0)
+      , legend.title = element_blank()
+      , axis.title = element_text(size = 7)
+      , axis.text = element_text(size = 7)
+      , panel.grid = element_blank()
     )
-  ) +
-  labs(
-    x = latex2exp::TeX("$r$")
-    , y = latex2exp::TeX("$K(r)$")
-  ) +
-  theme_bw() +
-  theme(
-    legend.position = c(0.1, 0.9)
-    , legend.text = element_text(size = 7)
-    , legend.title = element_blank()
-    # , axis.title = element_text(size = 7)
-    # , axis.text.y = element_text(size = 7)
-    # , axis.text.x = element_text(size = 7, angle = 35, hjust = 0.7)
-    # , panel.border = element_blank()
-  )
+```
 
-#plot K
-plot(Kest(ppp.cactus, correction="none"), legend=T)
-#plot L with 1:1 expectation
-Lnone <- Lest(ppp.cactus, correction="none")
-plot(Lest(ppp.cactus, correction="none"), legend=T)
-#L and K are related by sqrt(Knone$theo/pi)
-plot(sqrt(Knone$theo/pi), Lnone$theo) #this is a perfect 1 to 1 line
-plot(sqrt(Knone$theo/pi), Lnone$r) #this is a perfect 1 to 1 line
-#plot L with 0 expectation
-plot(Lnone, . - r~r, legend=T)
-#isotropic edge correction
-Liso <- Lest(ppp.cactus, correction="isotropic")
-plot(Liso, . - r~r, legend=T)
-
-#ggplot()+
-#  geom_line(data=Lnone, aes(x=r, y=theo-r), colour="red")+
-#  geom_line(data=Lnone, aes(x=r, y=un-r), colour="black")+
-#  labs(x="r", y="L(r)-r")+
-#  theme_classic()+
-#  theme(text = element_text(size=15))
+```{r}
+# create data set of L-hat estimates
+rbind(
+  # L-function with no correction for edge effects
+  spatstat.core::Lest(ppp.cactus, correction="none") %>% 
+    as.data.frame() %>%
+    dplyr::rename(lhat = 3) %>% 
+    dplyr::mutate(corr = "Edge Effect Correction: uncorrected")
+  # L-function with isotropic correction for edge effects
+  , spatstat.core::Lest(ppp.cactus, correction="isotropic") %>% 
+    as.data.frame() %>%
+    dplyr::rename(lhat = 3) %>% 
+    dplyr::mutate(corr = "Edge Effect Correction: isotropic") 
+  ) %>% 
+  dplyr::mutate(
+    corr = ordered(corr, levels = c("Edge Effect Correction: uncorrected", "Edge Effect Correction: isotropic"))
+  ) %>% 
+# plot with ggplot
+  ggplot(data = ., mapping = aes(x = r)) + 
+    geom_line(mapping = aes(y = theo-r, color = "2"), size = 1.1, linetype = "dashed") +
+    geom_line(mapping = aes(y = lhat-r, color = "1"), size = 1.1) + 
+    facet_wrap(.~corr, ) +
+    scale_color_manual(
+      values = c("black", "red")
+      , labels = c(
+        latex2exp::TeX("$\\hat{L}(r)$")
+        , latex2exp::TeX("$\\L_{pois}(r)$")
+      )
+    ) +
+    scale_x_continuous(breaks = scales::breaks_extended(n = 8)) +
+    scale_y_continuous(breaks = scales::breaks_extended(n = 8)) +
+    labs(
+      x = latex2exp::TeX("$r$")
+      , y = latex2exp::TeX("$L(r)-r$")
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "top" # c(0.1, 0.9)
+      , legend.text = element_text(size = 10, hjust = 0)
+      , legend.title = element_blank()
+      , legend.direction = "horizontal"
+      , legend.margin = margin(0,0,-8,0)
+      , axis.title = element_text(size = 10)
+      , axis.text = element_text(size = 7)
+      , panel.grid = element_blank()
+    ) +
+    guides(color = guide_legend(override.aes = list(size = 1)))
 ```
 
 <span style="color: teal;">
-The `spatstat.core::quadrat.test` function performs a test of Complete Spatial Randomness (CSR) for a given point pattern, based on quadrat counts. The resulting $\chi^2$ test statistic is **`r round(quadrat_test$statistic, 2)`** with a p-value of **`r round(quadrat_test$p.value, 4)`**. This test indicates that the point pattern observed in the eastern prickly pear data is significantly different from the null hypothesis of complete spatial randomness at the $\alpha = 0.05$ level. That is, the eastern prickly pear observation points are distributed non-randomly across the site. This approach does not consider edge effects and is a first-order metric that is based on point patterns across the entire study area.
+The greatest observed difference in the $\hat{L}(r)$ values between the uncorrected estimates and the estimates based on the isotropic correction for edge effects occur at higher values of $r$. As the radius $r$ of aggregation of points increases, the uncorrected $\hat{L}(r)$ values approach the values expected under complete spatial randomness but the edge effect correction reduces this bias as radius $r$ increases.
 </span>
 
 
 ## Question 7
 
-Using a point-wise envelope (𝛼 level of 0.05, isotropic correction), at what scales(s) do you reject the null hypothesis? In these regions, are the data clumped, randomly distributed, or uniform? No plot needed. (5 pts).
+Using a point-wise envelope ($\alpha$ level of 0.05, isotropic correction), at what scales(s) do you reject the null hypothesis? In these regions, are the data clumped, randomly distributed, or uniform? No plot needed. (5 pts).
 
 ```{r}
 
