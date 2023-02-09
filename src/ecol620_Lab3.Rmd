@@ -428,7 +428,7 @@ set.seed(42)
 #poisson distribution
 dist_pois <- spatstat.random::rpoispp(lambda = 100)
 #uniform/regular distribution
-dist_unif <- rSSI(r = 0.09, n = 70)
+dist_unif <- spatstat.random::rSSI(r = 0.09, n = 70)
 #clustered distribution
 dist_clust <- spatstat.random::rMatClust(kappa = 30, scale = 0.05, mu = 4)
 # define function for point plot
